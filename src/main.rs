@@ -119,3 +119,39 @@ fn generate_new_url(
     ))
     .expect("Failed to parse new URL")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_find_enumeration_position() {
+        let path = "/path/123";
+        let result = find_enumeration_position(path).unwrap();
+        assert_eq!(result, (6, 8, 3));
+
+        let path = "/path/001";
+        let result = find_enumeration_position(path).unwrap();
+        assert_eq!(result, (6, 8, 3));
+
+        let path = "/path/01";
+        let result = find_enumeration_position(path).unwrap();
+        assert_eq!(result, (6, 7, 2));
+
+        let path = "/path/1";
+        let result = find_enumeration_position(path);
+        assert!(result.is_err());
+
+        let path = "/path/001.foo1";
+        let result = find_enumeration_position(path).unwrap();
+        assert_eq!(result, (6, 8, 3));
+
+        let path = "/path/foo1/001";
+        let result = find_enumeration_position(path).unwrap();
+        assert_eq!(result, (11, 13, 3));
+
+        let path = "/path/abc";
+        let result = find_enumeration_position(path);
+        assert!(result.is_err());
+    }
+}
