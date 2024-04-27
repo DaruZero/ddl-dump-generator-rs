@@ -1,0 +1,23 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*.*.*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build artifact
+        run: cargo build --release
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: target/release/ddl-dump-generator
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          generate_release_notes: true
+          make_latest: true
