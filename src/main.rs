@@ -1,4 +1,6 @@
 use clap::Parser;
+use clio::*;
+use std::fs;
 use url::Url;
 
 #[derive(Parser)]
@@ -12,6 +14,10 @@ struct Args {
     /// End of the sequence
     #[arg(required = true, short, long)]
     end: usize,
+    /// Output file. If not provided, the output will be printed to stdout.
+    /// If the file already exists, it will be overwritten
+    #[arg(short, long, default_value = "-")]
+    output: Output,
 }
 
 fn main() {
@@ -44,7 +50,8 @@ fn main() {
         }
     }
 
-    // Print new lines with the sequence replaced
+    // Append to a buffer new lines with the sequence replaced
+    let mut buffer = String::with_capacity((args.end - args.start + 1) * args.url.as_str().len());
     for i in args.start..=args.end {
         let new_path = &format!(
             "{}{}{}",
@@ -60,6 +67,16 @@ fn main() {
             args.url.query().map_or("", |q| q)
         ))
         .expect("Failed to parse new URL");
-        println!("{}", new_url);
+
+        buffer.push_str(&(format!("{}\n", new_url)));
+    }
+
+    // Write the buffer to the output
+    if args.output.is_std() {
+        println!("{}", buffer);
+    } else if args.output.is_local() {
+        fs::write(args.output.path().path(), &buffer).expect("Failed to write to file");
+    } else {
+        panic!("Unsupported output");
     }
 }
