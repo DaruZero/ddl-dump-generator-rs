@@ -13,10 +13,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build artifact
         run: cargo build --release
+      - name: Tar artifact
+        run: tar -czf ddl-dump-generator.tar.gz target/release/ddl-dump-generator
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          files: target/release/ddl-dump-generator
+          files: ddl-dump-generator.tar.gz
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
           make_latest: true
