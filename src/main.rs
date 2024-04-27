@@ -30,7 +30,7 @@ fn main() {
     }
 
     // Identify the position of the incremental number in the URL path
-    let (start_index, end_index, padding) = find_enumeration_position(&args.url.path()).unwrap();
+    let (start_index, end_index, padding) = find_enumeration_position(args.url.path()).unwrap();
 
     // Append to a buffer new lines with the incremental number replaced
     let mut buffer = String::with_capacity((args.end - args.start + 1) * args.url.as_str().len());
