@@ -1,42 +1,30 @@
-use std::io;
+use clap::Parser;
 use url::Url;
+
+#[derive(Parser)]
+struct Args {
+    /// URL to use
+    #[arg(required = true, short, long)]
+    url: Url,
+    /// Start of the sequence
+    #[arg(short, long, default_value_t = 1)]
+    start: usize,
+    /// End of the sequence
+    #[arg(required = true, short, long)]
+    end: usize,
+}
 
 fn main() {
     // Get all the inputs
-    println!("Enter the URL: ");
-    let mut url = String::new();
+    let args = Args::parse();
 
-    io::stdin()
-        .read_line(&mut url)
-        .expect("Failed to read line");
-
-    let parsed_url = Url::parse(&url).expect("Failed to parse URL");
-
-    println!("Enter sequence start: ");
-    let mut start = String::new();
-
-    io::stdin()
-        .read_line(&mut start)
-        .expect("Failed to read line");
-
-    let start: usize = start.trim().parse().expect("Failed to parse start");
-
-    println!("Enter sequence end: ");
-    let mut end = String::new();
-
-    io::stdin()
-        .read_line(&mut end)
-        .expect("Failed to read line");
-
-    let end: usize = end.trim().parse().expect("Failed to parse end");
-
-    if start > end {
+    if args.start > args.end {
         println!("Start must be less than end");
         return;
     }
 
     // Identify the position of the sequence in the URL path
-    let path = parsed_url.path();
+    let path = args.url.path();
     let mut start_index = 0;
     let mut end_index = 0;
     let mut padding = 1;
@@ -57,7 +45,7 @@ fn main() {
     }
 
     // Print new lines with the sequence replaced
-    for i in start..=end {
+    for i in args.start..=args.end {
         let new_path = &format!(
             "{}{}{}",
             &path[..start_index],
@@ -66,10 +54,10 @@ fn main() {
         );
         let new_url = Url::parse(&format!(
             "{}://{}{}{}",
-            parsed_url.scheme(),
-            parsed_url.host_str().unwrap(),
+            args.url.scheme(),
+            args.url.host_str().unwrap(),
             new_path,
-            parsed_url.query().map_or("", |q| q)
+            args.url.query().map_or("", |q| q)
         ))
         .expect("Failed to parse new URL");
         println!("{}", new_url);

@@ -1,9 +1,10 @@
 [package]
-name = "ddl-dump-generator-rs"
-version = "0.1.0"
 edition = "2021"
+name    = "ddl-dump-generator-rs"
+version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-url = "2.5.0"
+clap = { version = "4.5.4", features = ["derive"] }
+url  = "2.5.0"
