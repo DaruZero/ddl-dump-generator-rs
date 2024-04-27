@@ -1,5 +1,5 @@
 use clap::Parser;
-use clio::*;
+use clio::Output;
 use std::fs;
 use url::Url;
 
@@ -8,10 +8,10 @@ struct Args {
     /// URL to use
     #[arg(required = true, short, long)]
     url: Url,
-    /// Start of the sequence
+    /// Start of the enumeration
     #[arg(short, long, default_value_t = 1)]
     start: usize,
-    /// End of the sequence
+    /// End of the enumeration
     #[arg(required = true, short, long)]
     end: usize,
     /// Output file. If not provided, the output will be printed to stdout.
@@ -29,8 +29,36 @@ fn main() {
         return;
     }
 
-    // Identify the position of the sequence in the URL path
-    let path = args.url.path();
+    // Identify the position of the incremental number in the URL path
+    let (start_index, end_index, padding) = find_enumeration_position(&args.url.path()).unwrap();
+
+    // Append to a buffer new lines with the incremental number replaced
+    let mut buffer = String::with_capacity((args.end - args.start + 1) * args.url.as_str().len());
+    for i in args.start..=args.end {
+        let new_url = generate_new_url(&args.url, i, start_index, end_index, padding);
+        buffer.push_str(&(format!("{}\n", new_url)));
+    }
+
+    // Write the buffer to the output
+    if args.output.is_std() {
+        println!("{}", buffer);
+    } else if args.output.is_local() {
+        fs::write(args.output.path().path(), &buffer).expect("Failed to write to file");
+    } else {
+        panic!("Unsupported output");
+    }
+}
+
+/// Finds the position of the incremental number in the URL path
+///
+/// # Arguments
+///
+/// * `path` - The URL path
+///
+/// # Returns
+///
+/// A tuple containing the start index, end index, and padding of the incremental number
+fn find_enumeration_position(path: &str) -> Result<(usize, usize, usize), String> {
     let mut start_index = 0;
     let mut end_index = 0;
     let mut padding = 1;
@@ -49,34 +77,45 @@ fn main() {
             break;
         }
     }
-
-    // Append to a buffer new lines with the sequence replaced
-    let mut buffer = String::with_capacity((args.end - args.start + 1) * args.url.as_str().len());
-    for i in args.start..=args.end {
-        let new_path = &format!(
-            "{}{}{}",
-            &path[..start_index],
-            &format!("{:0width$}", i, width = padding),
-            &path[end_index + 1..]
-        );
-        let new_url = Url::parse(&format!(
-            "{}://{}{}{}",
-            args.url.scheme(),
-            args.url.host_str().unwrap(),
-            new_path,
-            args.url.query().map_or("", |q| q)
-        ))
-        .expect("Failed to parse new URL");
-
-        buffer.push_str(&(format!("{}\n", new_url)));
-    }
-
-    // Write the buffer to the output
-    if args.output.is_std() {
-        println!("{}", buffer);
-    } else if args.output.is_local() {
-        fs::write(args.output.path().path(), &buffer).expect("Failed to write to file");
+    if start_index == 0 && end_index == 0 {
+        Err("No incremental number found in URL path".to_string())
     } else {
-        panic!("Unsupported output");
+        Ok((start_index, end_index, padding))
     }
+}
+
+/// Generates a new URL with the incremental number replaced
+///
+/// # Arguments
+///
+/// * `url` - The original URL
+/// * `number` - The incremental number
+/// * `start_index` - The start index of the sequence in the URL path
+/// * `end_index` - The end index of the sequence in the URL path
+/// * `padding` - The padding of the sequence
+///
+/// # Returns
+///
+/// The new URL with the incremental number replaced
+fn generate_new_url(
+    url: &Url,
+    number: usize,
+    start_index: usize,
+    end_index: usize,
+    padding: usize,
+) -> Url {
+    let new_path = &format!(
+        "{}{}{}",
+        &url.path()[..start_index],
+        &format!("{:0width$}", number, width = padding),
+        &url.path()[end_index + 1..]
+    );
+    Url::parse(&format!(
+        "{}://{}{}{}",
+        url.scheme(),
+        url.host_str().unwrap(),
+        new_path,
+        url.query().map_or("", |q| q)
+    ))
+    .expect("Failed to parse new URL")
 }
