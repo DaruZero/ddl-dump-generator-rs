@@ -4,9 +4,9 @@ A simple CLI tool to generate a sequential list of links written in Rust.
 
 ## Installation
 
-```bash
-cargo install ddl-dump-generator-rs
-```
+Download the latest release from the
+[releases page](https://github.com/DaruZero/ddl-dump-generator-rs/releases) and
+put the binary in your PATH.
 
 ## Usage
 
